@@ -1,0 +1,531 @@
+<!DOCTYPE HTML><html>
+<head>
+  
+  <!--INCLUDE JS FILES-->
+  <!-- <script src="scripts/chart.js"></script>
+  <script src="scripts/inputs.js"></script>
+  <script src="scripts/nutrisi.js"></script> -->
+  <script src="https://code.highcharts.com/highcharts.js"></script>
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!--STYLE-->
+  <style>
+    html{
+      font-family: Verdana, Geneva, Tahoma, sans-serif;
+      display: inline-block;
+      text-align: center;
+    }
+    body {
+      margin: 0;
+      width: 100%;
+      background-color: #d8f3dc;
+    }
+    h2 {
+      font-family: Arial;
+      font-size: 2.5rem;
+      text-align: center;
+    }
+    .charts-div{
+      margin-right: 250px;
+      margin-left: 200px;
+    }
+    .topnav {
+      overflow: hidden;
+      background-color: white;
+      color: white;
+      font-size: 1rem;
+      padding: 5px;
+    }
+    .switchLcd{
+      position: relative;
+      margin-left: 100px;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    /* Hide default HTML checkbox */
+  .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    /* The slider */
+  .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    
+  .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      -webkit-transition: .4s;
+      transition: .4s;
+    }
+    
+  input:checked + .slider {
+      background-color: #2196F3;
+    }
+    
+  input:focus + .slider {
+      box-shadow: 0 0 1px #2196F3;
+    }
+    
+  input:checked + .slider:before {
+      -webkit-transform: translateX(26px);
+      -ms-transform: translateX(26px);
+      transform: translateX(26px);
+    }
+    
+    /* Rounded sliders */
+  .slider.round {
+      border-radius: 34px;
+    }
+    
+  .slider.round:before {
+      border-radius: 50%;
+    }
+    .card {
+      background-color: white;
+      box-shadow: 2px 2px 12px 1px rgba(140, 140, 140, .5);
+      padding: 5%;
+  }
+  
+  .cards {
+      max-width: 800px;
+      margin: 0 auto;
+      margin-top: 50px;
+      margin-bottom: 50px;
+      display: grid;
+      grid-gap: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 2fr));
+  }
+  </style>
+  
+</head>
+
+<body>
+
+  <div class="topnav">
+    <h1 style="color: #3E8914;">AEROPONIC </h1>
+  </div>
+  <p style="font-size:small;word-spacing:120px;margin-right:10px">SYSTEM LCD</p>
+  <p style="font-size:small;word-spacing:90px;margin-right:10px">STOP/START OFF/ON</p>
+  <p> <label class="switch">
+    <input type="checkbox" id="button-onOff" onchange="startStop()">
+    <span class="slider round"></span>
+  </label>
+  <label class="switchLcd">
+    <input type="checkbox" id="lcd-onOff" onchange="lcdStartStop()">
+    <span class="slider round"></span>
+  </label>
+  </p>
+
+  <form id= "setPointForm">
+    <div id="inputs-div">
+      <p>
+        <label for="jenis-tanaman"> Jenis Tanaman : <input type="text" id="jenis-tanaman" name="jenis-tanaman" style=" width: 200px; height: 30px;"></label>
+        <label for="inputPh"> pH : <input type="text" id="input-ph" name="input-ph" style=" width: 100px; height: 30px;"></label>
+        <label for="inputTds"> TDS : <input type="text" id="input-tds" name="input-tds" style=" width: 100px; height: 30px;"></label>
+      </p>
+    </div>
+  </form>
+
+  <div>
+    <p><button type="button" onclick= "sendInputs()" style="background-color: #3DA35D; width:100px; height: 50px;color:white">Submit</button></p>
+  </div>
+  
+  <div>
+    <p>NUTRISI A : <span id="nutA" style="font-size: 32;"></span> </p>
+  </div>
+  <div>
+    <p>NUTRISI B : <span id="nutB" style="font-size: 32;"></span></p>
+  </div>
+
+  <div id="cards-div">
+    <div class="cards">
+      <!--pH-->
+      <div class="card">
+        <p>pH Value</p>
+        <p><span class="reading" id="ph"> </span></p>
+      </div>
+      <!--TDS-->
+      <div class="card">
+        <p>TDS Value </p>
+        <p><span class="reading"> <span id="tds"></span> ppm</span></p>
+      </div>
+      <!--Level air-->
+      <div class="card">
+        <p>Level Air </p>
+        <p><span class="reading"><span id="level"></span> %</span></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="charts-div">
+    <div id="chart-tds" class="container"></div>
+    <div id="chart-ph" class="container"></div>
+    <div id="chart-level" class="container"></div>
+  </div>
+
+</body>
+
+<!--INCLUDE SCRIPTS-->
+<script>
+  var notifA = null
+  var notifB = null
+  var seconds = 1000;
+  var minutes = 60 * seconds;
+  var interval = minutes*30;
+
+  window.addEventListener('load',onload);
+
+function onload(event){
+    tdsChart = createTdsChart();
+    phChart = createPhChart();
+    nutA = getNutrisiA();
+    nutB = getNutrisiB();
+    cekNutrisi = checkNutrisi();
+    phUpdate = updatePh();
+    tdsUpdate = updateTds();
+    levelUpdate = updateLevel();
+    startState = startStop();
+    lcdState = lcdStartStop();
+}
+
+//CREATING CHARTS
+function createTdsChart(){
+  var tdsSetPoint = document.getElementById("input-tds").value
+  var tdstemp = [tdsSetPoint]
+    var chartTds = new Highcharts.Chart({
+        chart:{ renderTo : 'chart-tds' },
+        title: { text: 'TDS Sensor Reading' },
+        series: [{
+          name:"TDS",
+          data: []
+        },{
+          name:"TDS set point",
+          data: tdstemp
+        }],
+        plotOptions: {
+          line: { animation: false,
+            dataLabels: { enabled: true }
+          },
+          series: { color: '#059e8a' }
+        },
+        xAxis: { type: 'datetime',
+          dateTimeLabelFormats: { second: '%H:%M:%S' }
+        },
+        yAxis: {
+          title: { text: 'TDS (ppm)' }
+        },
+        credits: { enabled: false }
+      });
+      setInterval(function ( ) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) {
+            var x = (new Date()).getTime(),
+                y = parseFloat(this.responseText);
+            //console.log(this.responseText);
+            if(chartTds.series[0].data.length > 40) {
+              chartTds.series[0].addPoint([x, y], true, true, true);
+            } else {
+              chartTds.series[0].addPoint([x, y], true, false, true);
+            }
+          }
+        };
+        xhttp.open("GET", "/TDS", true);
+        xhttp.send();
+      }, 30000) ;
+};
+
+function createPhChart(){
+  var phSetPoint = document.getElementById("input-ph").value
+  var tempPh = [phSetPoint]
+    var chartPh = new Highcharts.Chart({
+        chart:{ renderTo:'chart-ph' },
+        title: { text: 'pH Sensor Reading' },
+        series: [{
+          name:"pH",
+          data: []
+        },{
+          name:"pH set point",
+          data: tempPh,
+        }],
+        plotOptions: {
+          line: { animation: false,
+            dataLabels: { enabled: true }
+          }
+        },
+        xAxis: {
+          type: 'datetime',
+          dateTimeLabelFormats: { second: '%H:%M:%S' }
+        },
+        yAxis: {
+          title: { text: 'pH' }
+        },
+        credits: { enabled: false }
+      });
+      setInterval(function ( ) {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+          if (this.readyState == 4 && this.status == 200) {
+            var x = (new Date()).getTime(),
+                y = parseFloat(this.responseText);
+            //console.log(this.responseText);
+            if(chartPh.series[0].data.length > 40) {
+              chartPh.series[0].addPoint([x, y], true, true, true);
+            } else {
+              chartPh.series[0].addPoint([x, y], true, false, true);
+            }
+          }
+        };
+        xhttp.open("GET", "/PH", true);
+        xhttp.send();
+      }, 30000 ) ;
+};
+
+//UPDATING DATA TO CARDS
+function updatePh(){
+  var fieldPh = document.getElementById("ph")
+  var ph = null
+
+  setInterval(function(){
+    var xhttp = new XMLHttpRequest();
+
+    xhttp.onreadystatechange = function(){
+      if(this.readyState == 4 && this.status == 200){
+        ph = parseInt(this.responseText);
+        console.log("pH : " + ph);
+      }
+    };
+
+    xhttp.open("GET","/PH", true);
+    xhttp.send();
+
+    fieldPh.innerHTML = ph
+    fieldPh.innerText = ph
+  }, 3000)
+  
+}
+
+function updateTds(){
+  var fieldTds = document.getElementById("tds")
+  var tds = null
+
+  setInterval(function(){
+    var xhttp = new XMLHttpRequest();
+
+    xhttp.onreadystatechange = function(){
+      if(this.readyState == 4 && this.status == 200){
+        tds = parseInt(this.responseText);
+        console.log("TDS : " + tds);
+      }
+    };
+  
+    xhttp.open("GET","/TDS", true);
+    xhttp.send();
+  
+    fieldTds.innerHTML = tds
+    fieldTds.innerText = tds
+
+  }, 3000)
+}
+
+function updateLevel(){
+  var fieldLevel = document.getElementById("level")
+  var level = null
+
+  setInterval(function(){
+    var xhttp = new XMLHttpRequest();
+
+    xhttp.onreadystatechange = function(){
+      if(this.readyState == 4 && this.status == 200){
+        level = parseInt(this.responseText);
+        console.log("Level : " + level);
+      }
+    };
+  
+    xhttp.open("GET","/Level", true);
+    xhttp.send();
+  
+    fieldLevel.innerHTML = level
+    fieldLevel.innerText = level
+  }, 3000)
+}
+
+function getNutrisiA(){
+  setInterval(function(){
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function(){
+      if(xhttp.readyState == 4 && xhttp.status == 200){
+          notifA = xhttp.responseText.toString();
+          console.log("Nutrisi A : " + notifA);
+      }
+    };
+
+    xhttp.open("GET","/nutrisiA", true);
+    xhttp.send();
+  },3000)
+    
+}
+
+function getNutrisiB(){
+  setInterval(function(){
+    var xhttp = new XMLHttpRequest();
+    xhttp.onreadystatechange = function(){
+        if(xhttp.readyState == 4 && xhttp.status == 200){
+            notifB = xhttp.responseText.toString();
+            console.log("Nutrisi B : " + notifB);
+        }
+    };
+  
+    xhttp.open("GET","/nutrisiB", true);
+    xhttp.send();
+  },3000)
+}
+
+function checkNutrisi(){
+    var nutrisiA = document.getElementById('nutA');
+    var nutrisiB = document.getElementById('nutB');
+
+    setInterval(function(){
+      if(notifA == "On"){
+        nutrisiA.textContent = "LOW"
+        nutrisiA.style.color = "red"
+      }
+      else{
+        nutrisiA.textContent = "FILLED"
+        nutrisiA.style.color = "green"
+      } 
+
+      //JIKA NUTRISI B LOW
+      if(notifB == "On"){
+      nutrisiB.textContent = "LOW"
+      nutrisiB.style.color = "red"
+      }
+      //JIKA NUTRISI TIDAK LOW
+      else{
+      nutrisiB.textContent = "FILLED"
+      nutrisiB.style.color = "green"
+      }
+    },3000)
+    
+}
+
+function startStop(){
+  const slider = document.getElementById('button-onOff')
+  var state = null
+
+  if(slider.checked){
+      state = "on"
+      console.log('POWER ON')
+  }
+  else{
+      state = "off"
+      console.log('POWER OFF')
+  }
+
+  fetch("/tombol?state=" + state,{
+    method: "POST",
+  }).then(Response=>{
+    if(Response.ok){
+      console.log("Start: on -> terkirim!");
+    }
+    else{
+      console.error("Gagal mengirim data!");
+    }
+  }).catch(error=>{
+    console.error("Terjadi kesalahan", error);
+  })
+}
+
+function lcdStartStop(){
+  const slider = document.getElementById('lcd-onOff')
+  var state = null
+
+  if(slider.checked){
+      state = "on"
+      console.log('LCD ON')
+  }
+  else{
+      state = "off"
+      console.log('LCD OFF')
+  }
+
+  fetch("/LCD?stateLcd=" + state,{
+    method: "POST",
+  }).then(Response=>{
+    if(Response.ok){
+      console.log("LCD: on -> terkirim!");
+    }
+    else{
+      console.error("Gagal mengirim data!");
+    }
+  }).catch(error=>{
+    console.error("Terjadi kesalahan", error);
+  })
+}
+
+function sendInputs(){
+  console.log("sendInputs: ok")
+
+    //var tanaman = document.getElementById("jenis-tanaman");
+    var setnilaiTDS = document.getElementById("input-tds").value;
+    var setnilaiPH = document.getElementById("input-ph").value;
+
+    fetch("/setnilaiTDS?setnilaiTDS=" + setnilaiTDS,{
+        method: "POST"
+    }).then(Response => {
+        if(Response.ok){
+          console.log("set point TDS : " + setnilaiTDS);
+        }
+        else{
+          console.error("Gagal mengirim setpoint!")
+        }
+    }).catch(error => {
+        console.error(error);
+        alert("Terjadi kesalahan saat mengirim setpoint")
+    });
+
+    fetch("/setnilaiPH?setnilaiPH=" + setnilaiPH,{
+      method: "POST",
+    }).then(Response =>{
+      if(Response.ok){
+        console.log("set point pH : " + setnilaiPH);
+      }
+      else{
+        console.error("Gagal mengirim setpoint!")
+      }
+    }).catch(error => {
+      console.error(error);
+      alert("Terjadi kesalahan saat mengirim set point")
+    });
+
+  alert("Pengiriman set point berhasil!")
+}
+
+</script>
+
+</html>
