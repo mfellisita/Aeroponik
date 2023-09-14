@@ -6,13 +6,13 @@
 #include "pH.h"
 #include "nutrisi.h"
 
-#define BLYNK_TEMPLATE_ID "TMPL6phmJCq7p"
-#define BLYNK_TEMPLATE_NAME "Aeroponik"
-#define BLYNK_AUTH_TOKEN "U0PsIYVZ4SQBmHwnWFUM-cGSac-Ohsno"
+#define BLYNK_TEMPLATE_ID "REPLACE WITH YOUR TEMPLATE ID"
+#define BLYNK_TEMPLATE_NAME "REPLACE WITH YOUR PROJECT NAME"
+#define BLYNK_AUTH_TOKEN "REPLACE WITH YOUR AUTH KEY"
 
-char auth[] = "U0PsIYVZ4SQBmHwnWFUM-cGSac-Ohsno";
-char ssid[] = "Kangmas Andy";
-char pass[] = "esandy74";
+char auth[] = "REPLACE WITH YOUR AUTHTENTICATION";
+char ssid[] = "REPLACE WITH YOUR WIFI NAME";
+char pass[] = "REPLACE WITH YOUR WIFI PASSWORD";
 
 
 bool sistemStatus = false;
